@@ -23,6 +23,8 @@ g_deps = []
 g_protoc = ''
 g_thrift = ''
 g_cpps = set()
+g_protos = set()
+g_thrifts = set()
 g_content = ''
 g_output_dir = './output'
 
@@ -123,16 +125,16 @@ def DEP(module, version):
 def APP(bin_name, target_files):
     global g_apps 
     global g_cpps
+    global g_protos
+    global g_thrifts
     targets = []
     for target in target_files:
         if target.endswith('.proto'):
-            for t in  _generate_pb_files(target):
-                g_cpps.add(t)
-                targets.append(t)
+            g_protos.add(target)
+            targets.append(target)
         elif target.endswith('.thrift'):
-            for t in _generate_thrift_files(target):
-                g_cpps.add(t)
-                targets.append(t)
+            g_thrifts.add(target)
+            targets.append(target)
         else:
             g_cpps.add(target)
             targets.append(target)
@@ -260,7 +262,31 @@ def _generate_compile_obj_part():
         _add_content(obj_make_str)
     _add_content('\n\n')
 
+def _prepare():
+    global g_apps 
+    global g_cpps
+    global g_protos
+    global g_thrifts
+    cpp_map = {}
+    for proto in g_protos:
+        targets = _generate_pb_files(proto)
+        g_cpps.update(targets)
+        cpp_map[proto] = targets
+    for thrift in g_thrifts:
+        targets = _generate_thrift_files(thrift)
+        g_cpps.update(targets)
+        cpp_map[thrift] = targets
+    for app, targets in g_apps.items():
+        new_targets = []
+        for t in targets:
+            if t.endswith('.proto') or t.endswith('.thrift'): 
+                new_targets.extend(cpp_map[t])    
+            else:
+                new_targets.append(t)
+        g_apps[app] = new_targets
+
 def generate_makefile():
+    _prepare()
     _generate_env()
     _generate_phony()
     _generate_link_part()
