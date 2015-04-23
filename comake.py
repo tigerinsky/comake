@@ -16,7 +16,9 @@ g_basedir = os.getcwd() + "/.."
 g_cxx = 'g++'
 g_cxx_flags = ''
 g_ld_flags = ''
-g_include_path = ''
+g_include_path = ['.']
+g_include_str = ''
+g_dep_libs = [] 
 g_apps = {}
 g_libs = {}
 g_deps = []
@@ -54,6 +56,14 @@ def PROTOC(str):
 def THRIFT(str):
     global g_thrift
     g_thrift = str
+
+def INCLUDE(path_arr):
+    global g_include_path
+    g_include_path = g_include_path + path_arr 
+
+def DEP_LIB(lib_arr):
+    global g_dep_libs
+    g_dep_libs = g_dep_libs + lib_arr
 
 def OUTPUT(str):
     global g_output_dir
@@ -174,8 +184,8 @@ def _get_object_file(str):
         return str[0 : idx] + '.o'
 
 def _get_single_obj_str(cpp):
-    global g_include_path
-    (ret, err, out) = _execute('g++ -MM %s %s ' % (g_include_path, cpp))
+    global g_include_str
+    (ret, err, out) = _execute('g++ -MM %s %s ' % (g_include_str, cpp))
     if 0 != ret:
         log_warning(err)
         return None
@@ -186,7 +196,9 @@ def _get_single_obj_str(cpp):
 def _generate_env():
     global g_ld_flags
     global g_include_path
+    global g_include_str
     global g_basedir
+    global g_dep_libs 
     _add_content('#---------- env ----------\n')
     _add_content('CXX=%s\n' % (g_cxx))
     _add_content('CXXFLAGS=%s\n' % (g_cxx_flags))
@@ -194,14 +206,15 @@ def _generate_env():
     if 0 != ret:
         log_warning('get include dirs error, base_dir[%s] err[%s]' % (g_basedir, err))
         sys.exit(1)
-    g_include_path = ' '.join(['-I' + x for x in ('. ' + out).split()])
-    _add_content('INCPATH=%s\n' % (g_include_path))
+    g_include_path = g_include_path + out.split() 
+    g_include_str = ' '.join(['-I' + x for x in g_include_path])
+    _add_content('INCPATH=%s\n' % (g_include_str))
 
     (ret, err, out) = _execute("find %s \\( -path '*/lib/*.a' -o -path '*/output/lib/*.a' \\) -type f" % g_basedir)
     if 0 != ret:
         log_warning('get libs error, base_dir[%s], err[%s]' % (g_basedir, err))
         sys.exit(1)
-    _add_content('LIBPATH=-Xlinker "-(" %s %s -Xlinker "-)"\n' % (g_ld_flags, ' '.join(out.split())))
+    _add_content('LIBPATH=-Xlinker "-(" %s %s -Xlinker "-)"\n' % (g_ld_flags, ' '.join(g_dep_libs + out.split())))
 
     _add_content('\n\n')
 
