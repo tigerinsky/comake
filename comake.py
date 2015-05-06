@@ -185,7 +185,7 @@ def _get_object_file(str):
 
 def _get_single_obj_str(cpp):
     global g_include_str
-    (ret, err, out) = _execute('g++ -MM %s %s ' % (g_include_str, cpp))
+    (ret, err, out) = _execute('g++ -std=gnu++11 -MM %s %s ' % (g_include_str, cpp))
     if 0 != ret:
         log_warning(err)
         return None
