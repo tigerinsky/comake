@@ -122,6 +122,7 @@ def _generate_thrift_files(thrift):
             after_set.add(fields[6] + ' ' + fields[8])
     for file in after_set - before_set:
         if file.endswith('_server.skeleton.cpp'):
+            os.system('rm %s/%s' % (thrift_dir, file.split()[1]))
             continue
         elif file.endswith('.cpp'):
             result_list.append(file)
@@ -290,12 +291,12 @@ def _prepare():
         g_cpps.update(targets)
         cpp_map[thrift] = targets
     for app, targets in g_apps.items():
-        new_targets = []
+        new_targets = set() 
         for t in targets:
             if t.endswith('.proto') or t.endswith('.thrift'): 
-                new_targets.extend(cpp_map[t])    
+                new_targets.update(cpp_map[t])    
             else:
-                new_targets.append(t)
+                new_targets.add(t)
         g_apps[app] = new_targets
 
 def generate_makefile():
