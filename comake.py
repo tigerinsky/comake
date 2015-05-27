@@ -12,7 +12,8 @@ g_input = 'COMAKE'
 g_output = 'Makefile'
 g_enable_update_deps = False
 
-g_basedir = os.getcwd() + "/.." 
+g_cur_dir = os.getcwd()
+g_basedir = os.path.dirname(g_cur_dir) 
 g_cxx = 'g++'
 g_cxx_flags = ''
 g_ld_flags = ''
@@ -199,6 +200,7 @@ def _generate_env():
     global g_include_path
     global g_include_str
     global g_basedir
+    global g_cur_dir
     global g_dep_libs 
     _add_content('#---------- env ----------\n')
     _add_content('CXX=%s\n' % (g_cxx))
@@ -211,7 +213,7 @@ def _generate_env():
     g_include_str = ' '.join(['-I' + x for x in g_include_path])
     _add_content('INCPATH=%s\n' % (g_include_str))
 
-    (ret, err, out) = _execute("find %s \\( -path '*/lib/*.a' -o -path '*/output/lib/*.a' \\) -type f" % g_basedir)
+    (ret, err, out) = _execute("find %s \\( -path '*/lib/*.a' -o -path '*/output/lib/*.a' \\) -type f | grep -v '%s'" % (g_basedir, g_cur_dir))
     if 0 != ret:
         log_warning('get libs error, base_dir[%s], err[%s]' % (g_basedir, err))
         sys.exit(1)
