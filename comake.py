@@ -17,7 +17,7 @@ g_basedir = os.path.dirname(g_cur_dir)
 g_cxx = 'g++'
 g_cxx_flags = ''
 g_ld_flags = ''
-g_include_path = ['.']
+g_include_path = ['.', './include/']
 g_include_str = ''
 g_dep_libs = [] 
 g_apps = {}
@@ -205,7 +205,7 @@ def _generate_env():
     _add_content('#---------- env ----------\n')
     _add_content('CXX=%s\n' % (g_cxx))
     _add_content('CXXFLAGS=%s\n' % (g_cxx_flags))
-    (ret, err, out) = _execute("find %s \\( -path  '*/include' -o -path '*/output/include' \\) -type d" % g_basedir)
+    (ret, err, out) = _execute("find %s \\( -path '*/include' -o -path '*/output/include' \\) -type d | grep -v '%s/'" % (g_basedir, g_cur_dir))
     if 0 != ret:
         log_warning('get include dirs error, base_dir[%s] err[%s]' % (g_basedir, err))
         sys.exit(1)
